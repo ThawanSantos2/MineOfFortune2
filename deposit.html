@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Depositar | Mine of Fortune</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="./script.js"></script>
+  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-[#060818] text-white font-sans">
+
+  <header class="flex items-center justify-between px-6 py-4 bg-black shadow-md">
+    <div class="text-yellow-400 font-bold text-lg">Mine Of Fortune</div>
+    <nav class="hidden md:flex space-x-4">
+      <a href="dashboard.html" class="hover:text-yellow-500">Dashboard</a>
+      <a href="deposit.html" class="hover:text-yellow-500">Depositar</a>
+      <a href="withdraw.html" class="hover:text-yellow-500">Sacar</a>
+      <a href="profile.html" class="hover:text-yellow-500">Perfil</a>
+      <a id="logoutBtn" class="hover:text-yellow-500">Sair</a>
+    </nav>
+    <button id="menuToggle" class="md:hidden text-yellow-500">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+  </header>
+
+  <aside id="mobileMenu" class="fixed top-0 left-0 h-full w-64 bg-[#111827] transform -translate-x-full transition-transform duration-300 z-50 md:hidden">
+    <div class="p-6 text-xl font-bold text-yellow-400">Menu</div>
+    <ul class="space-y-2 px-4">
+      <li><a href="dashboard.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Dashboard</a></li>
+      <li><a href="deposit.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Depositar</a></li>
+      <li><a href="withdraw.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Sacar</a></li>
+      <li><a href="profile.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Perfil</a></li>
+      <li><a id="logoutBtn" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Sair</a></li>
+    </ul>
+  </aside>
+
+  <main class="p-6 max-w-xl mx-auto space-y-4">
+    <h2 class="text-2xl font-bold text-yellow-400 mb-2 text-center">Depositar USDC</h2>
+
+    <!-- Banner de instalação MetaMask -->
+    <div id="installMetaMask" class="hidden bg-yellow-500 text-black p-3 rounded">
+      <p>MetaMask não detectado. <a href="https://metamask.io/download.html" target="_blank" class="underline">Instalar MetaMask</a></p>
+    </div>
+
+    <div>
+      <label class="block mb-1">Valor (mínimo 17 USDC)</label>
+      <input id="valorDeposit"
+             type="number"
+             min="17"
+             step="0.01"
+             placeholder="17.00"
+             class="w-full p-2 bg-black rounded border border-gray-700 text-white"/>
+    </div>
+
+    <button id="btnPagar"
+            class="w-full bg-green-600 hover:bg-green-500 text-black py-2 rounded">
+      Pagar com MetaMask
+    </button>
+  </main>
+
+  <script type="module">
+    import { supabase } from './supabase.js';
+    import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers/dist/ethers.esm.min.js';
+
+    // Endereços com checksum correto
+    const USDC_ADDRESS_BSC = '0x8AC76A51Cc950d9822D68b83fE1Ad97B32Cd580d';
+    const RECEIVER_ADDRESS = '0x339450023F80D84D6fFccf4101AE9eA62fF39EA6';
+
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return window.location = 'login.html';
+
+      // Logout handlers
+      document.getElementById('logoutBtn').onclick =
+      document.getElementById('logoutBtnMobile').onclick = async () => {
+        await supabase.auth.signOut();
+        window.location = 'login.html';
+      };
+
+      const btn = document.getElementById('btnPagar');
+      const banner = document.getElementById('installMetaMask');
+
+      // Detecta MetaMask
+      if (typeof window.ethereum === 'undefined') {
+        banner.classList.remove('hidden');
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+        return;
+      }
+
+      btn.onclick = async () => {
+        const valorRaw = parseFloat(document.getElementById('valorDeposit').value);
+        if (!valorRaw || valorRaw < 17) {
+          return alert('Digite um valor válido (mínimo 17 USDC).');
+        }
+
+        try {
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          await provider.send('eth_requestAccounts', []);
+          const signer = provider.getSigner();
+
+          // Validação de endereço checksum
+          let safeReceiver;
+          try {
+            safeReceiver = ethers.utils.getAddress(RECEIVER_ADDRESS);
+          } catch (checksumError) {
+            return alert('Endereço de destino inválido. Verifique a configuração.');
+          }
+
+          const usdcAbi = ["function transfer(address to, uint amount) returns (bool)"];
+          const contract = new ethers.Contract(USDC_ADDRESS_BSC, usdcAbi, signer);
+          const amountWei = ethers.utils.parseUnits(valorRaw.toString(), 18);
+
+          const tx = await contract.transfer(safeReceiver, amountWei);
+          await tx.wait();
+
+          // Registrar depósito no Supabase
+          await supabase.from('depositos')
+            .insert({ usuario_id: user.id, valor: valorRaw, moeda: 'USDC' });
+
+          // Creditar pepitas (arredondado)
+          const { data: perfil } = await supabase.from('usuarios')
+            .select('pepitas').eq('id', user.id).single();
+          const credit = Math.round(valorRaw);
+          await supabase.from('usuarios')
+            .update({ pepitas: perfil.pepitas + credit }).eq('id', user.id);
+
+          alert(`Depósito de ${valorRaw} USDC realizado! (+${credit} pepitas)`);
+          window.location = 'dashboard.html';
+        } catch (err) {
+          console.error(err);
+          alert('Erro na transação MetaMask: ' + err.message);
+        }
+      };
+    })();
+  </script>
+</body>
+</html>

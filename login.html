@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | Mine of Fortune</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="script.js"></script>
+  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-[#060818] text-white font-sans min-h-screen flex items-center justify-center px-4">
+
+  <div class="bg-[#1f2937] p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h2 class="text-3xl font-bold text-yellow-400 mb-6 text-center">Entrar na Mina</h2>
+    <form id="formLogin" class="space-y-4">
+      <div>
+        <label for="email" class="block mb-1 text-sm">Email</label>
+        <input id="email" type="email" required class="w-full p-2 bg-black rounded border border-gray-700 text-white" />
+      </div>
+      <div>
+        <label for="senha" class="block mb-1 text-sm">Senha</label>
+        <input id="senha" type="password" required class="w-full p-2 bg-black rounded border border-gray-700 text-white" />
+      </div>
+      <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-2 rounded">Entrar</button>
+      <p id="mensagem" class="mt-4 text-center text-sm"></p>
+    </form>
+    <p class="mt-4 text-center text-gray-400 text-sm">
+      Ainda não tem conta? <a href="register.html" class="text-yellow-400 hover:underline">Cadastre-se aqui</a>
+    </p>
+  </div>
+
+  <script type="module">
+    import { loginUsuario, salvarLocal } from './script.js';
+
+    const form = document.getElementById('formLogin');
+    const msg  = document.getElementById('mensagem');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value;
+
+      if (!email || !senha) {
+        msg.textContent = 'Preencha todos os campos.';
+        msg.className   = 'text-red-400';
+        return;
+      }
+
+      try {
+        const usuario = await loginUsuario(email, senha);
+        salvarLocal(usuario);
+        msg.textContent = 'Login bem-sucedido! Redirecionando...';
+        msg.className   = 'text-green-400';
+        setTimeout(() => window.location.href = 'dashboard.html', 1500);
+      } catch (err) {
+        msg.textContent = 'Erro: ' + (err.message || 'Falha ao fazer login');
+        msg.className   = 'text-red-400';
+      }
+    });
+  </script>
+
+</body>
+</html>

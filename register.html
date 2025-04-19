@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registrar | Mine of Fortune</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="script.js"></script>
+  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-[#060818] text-white font-sans min-h-screen flex items-center justify-center px-4">
+  <div class="bg-[#1f2937] p-8 rounded-lg shadow-lg w-full max-w-xl">
+    <h2 class="text-3xl font-bold text-yellow-400 mb-6 text-center">Cadastro de Minerador</h2>
+    <form id="formRegister" class="space-y-4">
+      <div>
+        <label for="email" class="block mb-1 text-sm">Email</label>
+        <input id="email" type="email" required class="w-full p-2 bg-black rounded border border-gray-700 text-white" />
+      </div>
+      <div>
+        <label for="indicante" class="block mb-1 text-sm">Indicante (opcional)</label>
+        <input id="indicante" type="text" class="w-full p-2 bg-black rounded border border-gray-700 text-white" />
+      </div>
+      <div>
+        <label for="pais" class="block mb-1 text-sm">País</label>
+        <select id="pais" required class="w-full p-2 bg-black rounded border border-gray-700 text-white">
+          <option value="">Selecione um país</option>
+          <option>Brasil</option><option>Estados Unidos</option><option>Portugal</option>
+        </select>
+      </div>
+      <div>
+        <label for="usuario" class="block mb-1 text-sm">Minerador Login (usuário)</label>
+        <input id="usuario" type="text" required class="w-full p-2 bg-black rounded border border-gray-700 text-white" />
+      </div>
+      <div>
+        <label for="nome" class="block mb-1 text-sm">Nome completo</label>
+        <input id="nome" type="text" required class="w-full p-2 bg-black rounded border border-gray-700 text-white" />
+      </div>
+      <div>
+        <label for="senha" class="block mb-1 text-sm">Senha</label>
+        <input id="senha" type="password" required class="w-full p-2 bg-black rounded border border-gray-700 text-white" />
+      </div>
+      <div>
+        <label for="confirmar" class="block mb-1 text-sm">Confirmar Senha</label>
+        <input id="confirmar" type="password" required class="w-full p-2 bg-black rounded border border-gray-700 text-white" />
+      </div>
+      <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-2 rounded">Criar Conta</button>
+      <p id="mensagem" class="mt-4 text-center"></p>
+    </form>
+  </div>
+
+  <script type="module">
+    import { supabase, registrarUsuario, salvarLocal } from './script.js';
+
+    const form = document.getElementById('formRegister');
+    const msg  = document.getElementById('mensagem');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Primeiro, busque cada elemento
+      const emailEl     = document.getElementById('email');
+      const indicEl     = document.getElementById('indicante');
+      const paisEl      = document.getElementById('pais');
+      const userEl      = document.getElementById('usuario');
+      const nomeEl      = document.getElementById('nome');
+      const senhaEl     = document.getElementById('senha');
+      const confEl      = document.getElementById('confirmar');
+
+      // Agora leia os valores
+      const email      = emailEl.value.trim();
+      let indicante = indicEl.value.trim();
+if (indicante) {
+  const { data, error } = await supabase
+    .from('usuarios')
+    .select('id')
+    .eq('codigo_indicacao', indicante)
+    .single();
+
+  if (error || !data) {
+    msg.textContent = 'Código de indicação inválido.';
+    msg.className = 'text-red-400';
+    return;
+  }
+
+  indicante = data.id;
+}
+
+      const pais       = paisEl.value;
+      const usuario    = userEl.value.trim();
+      const nome       = nomeEl.value.trim();
+      const senha      = senhaEl.value;
+      const confirmar  = confEl.value;
+
+      // Validações
+      if (!email || !pais || !usuario || !nome || !senha || !confirmar) {
+        msg.textContent = 'Preencha todos os campos.';
+        msg.className   = 'text-red-400';
+        return;
+      }
+      if (senha !== confirmar) {
+        msg.textContent = 'Senhas não coincidem.';
+        msg.className   = 'text-red-400';
+        return;
+      }
+
+      // Tenta registrar
+      try {
+        const userData = await registrarUsuario({ email, senha, nome, usuario, pais, indicante });
+        salvarLocal(userData);
+        msg.textContent = 'Conta criada! Redirecionando...';
+        msg.className   = 'text-green-400';
+        setTimeout(() => window.location.href = 'login.html', 1500);
+      } catch (err) {
+        msg.textContent = 'Erro: ' + err.message;
+        msg.className   = 'text-red-400';
+      }
+    });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      const input = document.getElementById('indicante');
+      if (input) input.value = ref;
+    }
+  });
+
+
+  </script>
+</body>
+</html>

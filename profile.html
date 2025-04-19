@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Perfil | Mine of Fortune</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="./script.js"></script>
+  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-[#0b0f1a] text-white font-sans">
+
+  <header class="flex items-center justify-between px-6 py-4 bg-black shadow-md">
+    <div class="text-yellow-400 font-bold text-lg">Mine Of Fortune</div>
+    <nav class="hidden md:flex space-x-4">
+      <a href="dashboard.html" class="hover:text-yellow-500">Dashboard</a>
+      <a href="deposit.html" class="hover:text-yellow-500">Depositar</a>
+      <a href="withdraw.html" class="hover:text-yellow-500">Sacar</a>
+      <a href="profile.html" class="hover:text-yellow-500">Perfil</a>
+      <a id="logoutBtn" class="hover:text-yellow-500">Sair</a>
+    </nav>
+    <button id="menuToggle" class="md:hidden text-yellow-500">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+  </header>
+
+  <aside id="mobileMenu" class="fixed top-0 left-0 h-full w-64 bg-[#111827] transform -translate-x-full transition-transform duration-300 z-50 md:hidden">
+    <div class="p-6 text-xl font-bold text-yellow-400">Menu</div>
+    <ul class="space-y-2 px-4">
+      <li><a href="dashboard.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Dashboard</a></li>
+      <li><a href="deposit.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Depositar</a></li>
+      <li><a href="withdraw.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Sacar</a></li>
+      <li><a href="profile.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Perfil</a></li>
+      <li><a id="logoutBtn" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Sair</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="p-6 max-w-lg mx-auto">
+    <h2 class="text-2xl font-bold text-center mb-6">Seu Perfil</h2>
+
+    <div class="bg-[#141827] p-6 rounded-xl shadow-lg space-y-4">
+
+      <p><strong>Nome de Usuário:</strong> <span id="nomeUsuario"></span></p>
+      <p><strong>Email:</strong> <span id="emailUsuario"></span></p>
+      <p><strong>Pepitas Disponíveis:</strong> <span id="pepitasUsuario" class="text-yellow-400"></span></p>
+      <p><strong>Nível Atual:</strong> <span id="nivelUsuario" class="text-blue-400"></span></p>
+      <p><strong>Mina Atual:</strong> <span id="minaAtual" class="text-green-400"></span></p>
+      <p><strong>Indicações Válidas:</strong> <span id="indicacoesValidas" class="text-purple-400"></span></p>
+
+    </div>
+  </main>
+
+  <script type="module">
+    import { supabase } from './supabase.js';
+
+    (async () => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (!user) return window.location.href = 'login.html';
+
+      // Logout
+      document.getElementById('logoutBtn').onclick = async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'login.html';
+      };
+
+      // Buscar dados do usuário
+      const { data: perfil, error: perfilError } = await supabase
+        .from('usuarios')
+        .select('usuario, email, pepitas, fase, minas_completas')
+        .eq('id', user.id)
+        .single();
+
+      if (perfilError) {
+        alert('Erro ao buscar dados do perfil: ' + perfilError.message);
+        return;
+      }
+
+      document.getElementById('nomeUsuario').textContent = perfil.usuario || 'N/A';
+      document.getElementById('emailUsuario').textContent = perfil.email;
+      document.getElementById('pepitasUsuario').textContent = perfil.pepitas + ' 🪙';
+      document.getElementById('nivelUsuario').textContent = formatarNivel(perfil.fase);
+      document.getElementById('minaAtual').textContent = 'Mina ' + (perfil.minas_completas || 1);
+
+      // Buscar indicações válidas
+      const { data: indicacoes, error: indicError } = await supabase
+        .from('indicacoes')
+        .select('*', { count: 'exact', head: true })
+        .eq('indicante_id', user.id)
+        .eq('valido', true);
+
+      const numIndicacoes = indicacoes?.length || 0;
+      document.getElementById('indicacoesValidas').textContent = numIndicacoes;
+
+    })();
+
+    function formatarNivel(nivel) {
+      switch(nivel) {
+        case 'trabalhador': return '🛠️ Trabalhador';
+        case 'supervisor': return '📋 Supervisor';
+        case 'gerente': return '📈 Gerente';
+        case 'supremo': return '👑 Minerador Supremo';
+        default: return nivel;
+      }
+    }
+  </script>
+</body>
+</html>

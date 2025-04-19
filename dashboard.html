@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Mine of Fortune | Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-[#060818] text-white font-sans">
+
+  <header class="flex items-center justify-between px-6 py-4 bg-black shadow-md">
+    <div class="text-yellow-400 font-bold text-lg">Mine Of Fortune</div>
+    <nav class="hidden md:flex space-x-4">
+      <a href="dashboard.html" class="hover:text-yellow-500">Dashboard</a>
+      <a href="deposit.html" class="hover:text-yellow-500">Depositar</a>
+      <a href="withdraw.html" class="hover:text-yellow-500">Sacar</a>
+      <a href="profile.html" class="hover:text-yellow-500">Perfil</a>
+      <a id="logoutBtn" class="hover:text-yellow-500">Sair</a>
+    </nav>
+    <button id="menuToggle" class="md:hidden text-yellow-500">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+  </header>
+
+  <aside id="mobileMenu" class="fixed top-0 left-0 h-full w-64 bg-[#111827] transform -translate-x-full transition-transform duration-300 z-50 md:hidden">
+    <div class="p-6 text-xl font-bold text-yellow-400">Menu</div>
+    <ul class="space-y-2 px-4">
+      <li><a href="dashboard.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Dashboard</a></li>
+      <li><a href="deposit.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Depositar</a></li>
+      <li><a href="withdraw.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Sacar</a></li>
+      <li><a href="profile.html" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Perfil</a></li>
+      <li><a id="logoutBtn" class="block py-2 px-4 rounded hover:bg-yellow-500 hover:text-black">Sair</a></li>
+    </ul>
+  </aside>
+
+  <main class="p-6 max-w-3xl mx-auto space-y-6">
+    <!-- 1) SALDO -->
+    <section class="bg-[#1f2937] p-6 rounded-lg shadow-md">
+      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Minhas Pepitas</h2>
+      <div id="pepitas" class="text-4xl font-bold text-lime-400 mb-4">0</div>
+      <div class="flex gap-4">
+        <a href="deposit.html" class="bg-green-600 px-4 py-2 rounded">+ Depósito</a>
+        <a href="withdraw.html" class="bg-red-600 px-4 py-2 rounded">– Saque</a>
+      </div>
+    </section>
+
+    <!-- 2) CÓDIGO & INDICAÇÕES & FASE & PEPITAS PRESAS -->
+    <section class="bg-[#1f2937] p-6 rounded-lg shadow-md">
+      <p>Código: <span id="meuCodigo" class="font-mono bg-black px-2 rounded text-green-400">---</span></p>
+      <p>Indicações válidas: <span id="indicados" class="text-orange-400 font-bold">0</span></p>
+      <p>Fase: <span id="faseAtual" class="text-yellow-300">---</span></p>
+      <p>Pepitas Presas: <span id="presas" class="text-red-400">0</span></p>
+      <button onclick="copiarLink()" class="mt-2 bg-yellow-500 px-3 py-1 rounded text-black text-sm">Copiar link</button>
+      <p id="mensagemLink" class="text-green-400 text-sm mt-2"></p>
+    </section>
+
+    <!-- 3) LOJA -->
+    <section class="bg-[#1f2937] p-6 rounded-lg shadow-md">
+      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Loja</h2>
+      <div id="cardBasico" class="bg-[#212529] p-4 rounded hidden">
+        <img src="assets/basic-pickaxe.png" alt="Kit Básico" class="mb-2 w-full h-42 object-cover rounded" />
+        <h3 class="font-bold">Kit Básico</h3>
+        <p class="mb-4">
+          Picareta inicial<br/>
+          Custo: 17 pepit coins
+        </p>
+        <button id="buyPickaxe" class="mt-2 w-full bg-yellow-500 py-2 rounded text-black">
+          Comprar
+        </button>
+      </div>
+      <br>
+      <div id="cardAvancado" class="bg-[#212529] p-4 rounded hidden">
+        <img src="assets/advanced-pickaxe.png" alt="Kit Avançado" class="mb-2 w-full h-42 object-cover rounded" />
+        <h3 class="font-bold">Kit Avançado</h3>
+        <p class="mb-4">
+          Picareta + Botas<br/>
+          Custo: 51 pepit coins
+        </p>
+        <button id="buyEnhanced" class="mt-2 w-full bg-yellow-500 py-2 rounded text-black">
+          Comprar
+        </button>
+      </div>
+      
+    </section>
+
+    <!-- 4) JORNADA ATUAL -->
+    <section class="bg-[#1f2937] p-6 rounded-lg shadow-md">
+      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Jornada Atual</h2>
+      <div class="flex items-start gap-4">
+        <img id="oldManImage" src="./assets/velho-gordo.png" alt="Velho Gordo" class="w-16 h-16 rounded-full object-cover" />
+        <div>
+          <h3 id="stageTitle" class="text-xl font-semibold mb-2">Bem-vindo, Trabalhador!</h3>
+          <p id="stageDescription" class="text-gray-300">Compre sua picareta e recrute dois aliados para seguir escavando!</p>
+        </div>
+      </div>
+      <button id="mineButton" class="mt-6 hidden bg-green-600 hover:bg-green-700 px-6 py-2 rounded-full text-white">Minerar e Avançar</button>
+    </section>
+
+    <!-- 5) MINHA EQUIPE -->
+    <section class="bg-[#191e3a] p-6 rounded-lg shadow-lg">
+      <h2 class="text-2xl font-bold text-yellow-400 mb-4">Minha Equipe</h2>
+      <style>
+        .clip-shield { clip-path: polygon(50% 0%,90% 15%,100% 60%,80% 100%,20% 100%,0% 60%,10% 15%); }
+      </style>
+      <!-- Nível 4 -->
+      <div class="mb-6">
+        <h3 class="text-yellow-300 mb-2">Minerador Supremo</h3>
+        <div class="grid grid-cols-1 gap-4 justify-items-center">
+          <div id="ref4-0" class="w-16 h-20 bg-black border-2 border-purple-500 clip-shield flex items-center justify-center"></div>
+        </div>
+      </div>
+      <!-- Nível 3 -->
+      <div class="mb-6">
+        <h3 class="text-yellow-300 mb-2">Gerente</h3>
+        <div class="grid grid-cols-2 gap-4 justify-items-center">
+          <div id="ref3-0" class="w-16 h-20 bg-black border-2 border-blue-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref3-1" class="w-16 h-20 bg-black border-2 border-blue-500 clip-shield flex items-center justify-center"></div>
+        </div>
+      </div>
+
+      <!-- Supervisor (nível 2) -->
+      <div class="mb-6">
+        <h3 class="text-yellow-300 mb-2">Supervisor</h3>
+        <div class="grid grid-cols-4 gap-4 mx-auto justify-items-center">
+          <div id="ref2-0" class="w-16 h-20 bg-black border-2 border-yellow-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref2-1" class="w-16 h-20 bg-black border-2 border-yellow-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref2-2" class="w-16 h-20 bg-black border-2 border-yellow-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref2-3" class="w-16 h-20 bg-black border-2 border-yellow-500 clip-shield flex items-center justify-center"></div>
+        </div>
+      </div>
+
+      <!-- Trabalhador (nível 1) -->
+      <div>
+        <h3 class="text-yellow-300 mb-2">Trabalhador</h3>
+        <div class="grid grid-cols-4 gap-4 mx-auto justify-items-center">
+          <div id="ref1-0" class="w-16 h-20 bg-black border-2 border-green-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref1-1" class="w-16 h-20 bg-black border-2 border-green-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref1-2" class="w-16 h-20 bg-black border-2 border-green-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref1-3" class="w-16 h-20 bg-black border-2 border-green-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref1-4" class="w-16 h-20 bg-black border-2 border-green-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref1-5" class="w-16 h-20 bg-black border-2 border-green-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref1-6" class="w-16 h-20 bg-black border-2 border-green-500 clip-shield flex items-center justify-center"></div>
+          <div id="ref1-7" class="w-16 h-20 bg-black border-2 border-green-500 clip-shield flex items-center justify-center"></div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script type="module">
+    import {
+      carregarUsuarioAtual,
+      gerarArvoreIndicacoes,
+      comprarPicareta,
+      comprarPicaretaMelhorada,
+      finalizarMina,
+      calcularFaseUsuario
+    } from './script.js';
+    import { supabase } from './supabase.js';
+    
+    function mostrarPopup(texto, cor = 'bg-yellow-400') {
+      const popup = document.createElement('div');
+      popup.className = `fixed top-10 left-1/2 transform -translate-x-1/2 ${cor} text-black px-6 py-4 rounded-lg shadow-lg text-lg z-50 animate-bounce`;
+      popup.textContent = texto;
+      document.body.appendChild(popup);
+      setTimeout(() => popup.remove(), 5000);
+    }
+    
+    (async () => {
+      let user = await carregarUsuarioAtual();
+      if (!user) return window.location.href = 'login.html';
+    
+      const faseAntes = user.fase;
+      let novaFase = await calcularFaseUsuario(user.id);
+      let niveis = await gerarArvoreIndicacoes([user.id]);
+    
+      user = await carregarUsuarioAtual();
+    
+      document.getElementById('pepitas').textContent = user.pepitas;
+      document.getElementById('meuCodigo').textContent = user.codigo_indicacao;
+      document.getElementById('indicados').textContent = niveis[1]?.length || 0;
+      document.getElementById('faseAtual').textContent = ['Iniciante', 'Trabalhador', 'Supervisor', 'Gerente', 'Minerador Supremo'][user.fase] || 'Iniciante';
+      document.getElementById('presas').textContent = user.presas;
+    
+      if (user.fase > faseAntes) {
+        const titulo = ['Iniciante', 'Trabalhador', 'Supervisor', 'Gerente', 'Minerador Supremo'][user.fase];
+        mostrarPopup(`🎉 Parabéns por se tornar um ${titulo}!`);
+      }
+    
+      const stageInfo = {
+        0: { title: 'Iniciante', desc: 'Compre seu kit e comece a minerar!' },
+        1: { title: 'Trabalhador', desc: 'Nessa jornada, ninguém cava sozinho! Convide 2 amigos, forme sua equipe e suba de nível.' },
+        2: { title: 'Supervisor', desc: 'Oriente seus trabalhadores a convidar 2 novos amigos cada um, ajude-os a crescer e receba 20% das pepitas conquistadas por eles.' },
+        3: { title: 'Gerente', desc: 'Expanda sua rede de mineradores e garanta a produtividade de todos.' },
+        4: { title: 'Minerador Supremo', desc: 'Torne-se o líder da mina! Coordene tudo e aproveite as recompensas finais.' }
+      };
+      const etapa = stageInfo[user.fase] || stageInfo[0];
+      document.getElementById('stageTitle').textContent = etapa.title;
+      document.getElementById('stageDescription').textContent = etapa.desc;
+    
+      const imgMap = {
+        0: './assets/iniciante.png',
+        1: './assets/trabalhador.png',
+        2: './assets/supervisor.png',
+        3: './assets/gerente.png',
+        4: './assets/supremo.png'
+      };
+      document.getElementById('oldManImage').src = imgMap[user.fase] || 'iniciante.png';
+    
+      const cardB = document.getElementById('cardBasico');
+const cardA = document.getElementById('cardAvancado');
+
+// 1) Começamos escondendo os dois
+cardB.classList.add('hidden');
+cardA.classList.add('hidden');
+
+// 2) Sempre mostra o Kit Básico
+cardB.classList.remove('hidden');
+
+// 3) Se completou 1 ou mais minas, mostra também o Kit Avançado
+if (user.minas_completas >= 1) {
+  cardA.classList.remove('hidden');
+}
+
+    
+      document.getElementById('buyPickaxe').onclick = async () => {
+        await comprarPicareta(user.id);
+        mostrarPopup('✅ Picareta comprada com sucesso!');
+        location.reload();
+      };
+    
+      document.getElementById('buyEnhanced').onclick = async () => {
+        await comprarPicaretaMelhorada(user.id);
+        mostrarPopup('✅ Kit Avançado comprado!');
+        location.reload();
+      };
+    
+      const mineBtn = document.getElementById('mineButton');
+      if (user.fase === 4) {
+        mineBtn.classList.remove('hidden');
+        mineBtn.onclick = async () => {
+  await finalizarMina(user.id);
+  mostrarPopup('💰 Parabéns! Você finalizou a mina!', 'bg-green-500');
+
+  // ⏳ Espera um pouco antes de mostrar o reinício
+  await new Promise(r => setTimeout(r, 2000));
+
+  // Mostra mensagem de reinício com animação
+  mostrarPopup('🚀 Nova Mina Iniciada! Sua equipe foi resetada!', 'bg-blue-400');
+
+  // Espera mais um pouco para depois recarregar
+  await new Promise(r => setTimeout(r, 2000));
+
+  novaFase = await calcularFaseUsuario(user.id);
+  location.reload();
+};
+
+      }
+    
+      // Mostra equipe apenas se estiver em fase > 0
+      if (user.fase === 0) {
+        for (let nivel = 1; nivel <= 4; nivel++) {
+          const max = [ ,8,4,2,1 ][nivel];
+          for (let i = 0; i < max; i++) {
+            const el = document.getElementById(`ref${nivel}-${i}`);
+            if (el) {
+              el.textContent = '';
+              el.style.backgroundImage = 'none';
+            }
+          }
+        }
+      } else {
+        for (let nivel = 1; nivel <= 4; nivel++) {
+          const max = [ ,8,4,2,1 ][nivel];
+          (niveis[nivel]||[]).slice(0,max).forEach((ind, i) => {
+            const el = document.getElementById(`ref${nivel}-${i}`);
+            if (el) {
+              el.textContent = ind.nome;
+              el.style.backgroundImage = `url('https://ui-avatars.com/api/?name=${encodeURIComponent(ind.nome)}&background=222&color=fff')`;
+              el.style.backgroundSize = 'cover';
+            }
+          });
+        }
+      }
+    
+      document.getElementById('logoutBtn').onclick = async () => {
+        await supabase.auth.signOut();
+        location.href = 'login.html';
+      };
+    })();
+    
+// expõe a função no escopo global para que o onclick inline a encontre
+window.copiarLink = () => {
+  const codigo = document.getElementById('meuCodigo').textContent;
+  const url = `${location.origin}/register.html?ref=${codigo}`;
+  navigator.clipboard.writeText(url)
+    .then(() => {
+      document.getElementById('mensagemLink').textContent = 'Link copiado!';
+    })
+    .catch(() => {
+      const textarea = document.createElement('textarea');
+      textarea.value = url;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+      document.getElementById('mensagemLink').textContent = 'Link copiado (fallback)!';
+    });
+};
+    </script>
+</body>
+</html>
+
